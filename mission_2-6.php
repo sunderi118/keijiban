@@ -1,52 +1,143 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta http-equiv="content-type" charset="UTF-8">
-<title>プログラミングブログ</title>
+	<meta http-equiv="content-type" charset="UTF-8">
+	<title>My Web Page</title>
+	 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<header></header>
 <?php
 header("Content-Type: text/html; charset=UTF-8");
 ?>
 
-<h1>いまどうしてる？</h1>
+<div class="comment">
+<h2>Comment If You Like</h2>
+
+		<form action="mission_2-6.php" method="post">
+		Name<br>
+		<input type="text" name="name"><br>
+		Comment<br>
+		<input type="text" name="comment"><br>
+		Password<br>
+		<input type="text" name="pass"><br>
+		<input type="submit" value="送信">
+		</form>
+	</div>
+		<?php 
+	
+		$textfile='mission_2.txt';
+	
+		if(isset($_POST['name']) && ($_POST['comment']) && ($_POST['pass'])){
+	
+			$lines = file($textfile);
+	
+			$fp = @fopen($textfile,"a");
+	
+			$line_num =count($lines)+ 1;
+	
+			fwrite($fp, $line_num."<>".$_POST['name']."<>".$_POST['comment']."<>".$_POST['pass']."<>".date("Y/m/d h:i:s").PHP_EOL);
+	
+			fclose($fp);
+		}
+		?>
+
+	
+<div class="comment">
+<h2>Edit</h2>
+
+<form action="mission_2-6.php" method="post">
+
+Edit your comment<br>
+<input type="text" name="edit"><br>
+password<br>
+<input type="text" name="edit_pass"><br>
+<input type="submit" value="編集"><br>
+
+</form>
 
 <?php
-
-$textfile = 'mission_2.txt';
-$name=$_POST['name'];
-$memo=$_POST['memo'];
-$password=$_POST['password'];
-$date=date("Y/m/d h:i:s");
-//新規保存
-if(isset($name) && ($memo) && ($password)){
-
-	if(empty($_POST['text'])){
+if(isset($_POST['edit']) && ($_POST['edit_pass'])){
+	
+	$edit=$_POST['edit'];
 	$lines = file($textfile);
+	
+	foreach($lines as $line){	
+	
+		//＜＞で分割してdata配列に追加
+		$data= explode("<>",$line);
+	
+		if($data[0]==$edit && $data[3] == $_POST['edit_pass']){
+	
+			//編集番号に入力があったら入力フォームに表示させる
+			$num =$data[0]; $user=$data[1]; $text=$data[2];
+?>
 
-	$fp = @fopen($textfile,"a");
+		<form action="mission_2-6.php" method="post">
 
-	$line_num =count($lines)+ 1;
+		
+		<input type="hidden" name="edit_num" value="<?php echo $num ; ?>"/><br>
+		Edit your comment<br>
+		name<br>
+		<input type="text" name="edit_name" value="<?php echo $user ; ?>"/><br>
+		comment<br>
+		<input type= "text" name="edit_comment" value="<?php echo $text ; ?>"<br>
+		<input type="submit" value="編集"><br>
 
-	fwrite($fp, $line_num."<>".$name."<>".$memo."<>".$password."<>".$date.PHP_EOL);
-
-	fclose($fp);
+		</form>
+	
+<?php	
+		}
 	}
 }
+//編集モードに入力があったら	
+if(!empty($_POST['edit_name']) && ($_POST['edit_comment']) && ($_POST['edit_num'])){
+	
+	$lines = file($textfile);
+	
+	$fp = @fopen($textfile,'w+');
+	
+	foreach($lines as $line){	
+	
+		$data = explode("<>", $line);
+	
+		//<>で切って配列に
+		if($data[0]== $_POST['edit_num']){			
+			
+			$new_line=($_POST['edit_num'])."<>".($_POST['edit_name'])."<>".($_POST['edit_comment'])."<>".$data[3]."<>".date("Y/m/d h:i:s").PHP_EOL;
+		
+			fputs($fp,$new_line);
+		}
+else{
+	$new = file($textfile);
+	
+	$new_num= count($new) +1;
+	
+	fputs($fp,$new_num."<>".$data[1]."<>".$data[2]."<>".$data[3]."<>".$data[4]);
+}	
+}
+fclose($fp);
+}
 
-//データ削除に入力があればパスワード入力フォームを呼び出す
-if(isset($_POST['delete_num'])){
-	
-	$delete_num=$_POST['delete_num'];	
 ?>
-	
-	<form action="mission_2-6.php" method="post">
-	パスワードを入力してください<input type= "text"  name ="check_pass">
-	<input type = "submit" name="submit" value="send it">
-	<br>
-	</form>
+
+</div>
+<div class="comment">
+<h2>Delete</h2>
+
+
+<form action="mission_2-6.php" method="post">
+Delete your comment<br>
+<input type="text" name="delete"><br>
+password<br>
+<input type="text" name="delete_pass"><br>
+<input type="submit" value="削除"><br>
+</form>
+</div>
 <?php
+if(isset($_POST['delete']) && ($_POST['delete_pass'])){
+
+	$delete=$_POST['delete'];	
 	
 	$lines=file($textfile);
 	
@@ -54,23 +145,15 @@ if(isset($_POST['delete_num'])){
 	
 		$data= explode("<>",$line);
 	
-		$check_pass= $_POST['check_pass'];
-	
-		if($data[0]== $delete_num && $data[3]== $check_pass){
+		if($data[0]== $delete && $data[3] ==($_POST['delete_pass'])){
 		
+			$fp= fopen($textfile,"w+");	
+				
 			foreach($lines as $line){
-			
-			$data= explode("<>",$line);
-		
-			if($data[3] == $check_pass){
 				
-				$fp= fopen($textfile,"w+");	
-				
-				foreach($lines as $line){
-				
-					$data= explode("<>",$line);
+				$data= explode("<>",$line);
 					//削除番号と同じ行のデータじゃなかったら
-					if($data[0] != $delete_num){		
+				if($data[0] != $delete){		
 	
 						$new = file($textfile);
 	
@@ -80,113 +163,13 @@ if(isset($_POST['delete_num'])){
 					}
 				}	
 			fclose($fp);
-			}else{echo"パスワードが正しくありません";}
-		}
+		}	
 	}
 }
-}
-if(isset($_POST['edit'])){
-	
-	$edit=($_POST['edit']);
-	
-?>
-	<form action="mission_2-6.php" method="post">
-	パスワードを入力してください<input type= "text"  name ="check_pass">
-	<input type = "submit" name="submit" value="send it">
-	</form>
-<?php
-
-	$check_pass= $_POST['check_pass'];
-	
-	$lines=file($textfile);
-	
-	foreach($lines as $line){	
-	
-		//＜＞で分割してdata配列に追加
-		$data= explode("<>",$line);
- 
-		if($data[0]== $edit  && $data[3]==$check_pass){		 
-?>		
-			編集番号：<?php $data[0]; ?>
-			<form action="mission_2-6.php" method="post">
-			<input type ="hidden" name="edit_num">
-			<input type= "text"  name ="edit_name">
-			<input type= "text"  name ="edit_memo">
-			<input type = "submit" value="変更する">
-			</form>
-<?php
-		}
-	}
-}
-
-if(isset($_POST['edit_name']) && ($_POST['edit_memo']) && ($_POST['edit_num'])){
-		
-	$edit_name=$_POST['edit_name'];
-	$edit_memo=$_POST['edit_memo'];
-	$edit_num=$_POST['edit_num'];
-		
-	$lines = file($textfile);
-		
-	$fp = @fopen($textfile,'w+');
-		
-	foreach($lines as $line){
-		
-		$data = explode("<>", $line);
-		
-		if($data[0]== $edit_num){
-		
-			$new_line= ($edit_num."<>".$edit_name."<>".$edit_memo."<>".$data[3].$date.PHP_EOL);
-		
-			fputs($fp,$new_line);
-		
-			}else{
-		
-				$new = file($textfile);
-	
-				$new_num= count($new) +1;
-	
-				fputs($fp,$new_num."<>".$data[1]."<>".$data[2]."<>".$data[3]."<>".$data[4]);	
-			}
-		}
-	fclose($fp);
-}
-
-?>
-
-<!_ 入力フォームを作成する_>
-<form action = "mission_2-6.php" method ="post">
-<br>
-	<!_名前フォーム_>
-	名前：
-	<input type= "text" name = "name">
-	<!_コメントフォーム_>
-	コメント:
-	<input type= "text" name ="memo">
-	パスワード
-	<input type= "text" name ="password">
-	<input type = "submit" name="submit" value="send it">
-</form>
-
-<!_編集番号フォーム_>
-<form action = "mission_2-6.php" method ="post">
-	<p>編集番号：<input type= "text"  name = "edit">
-	<input type = "submit" value="send it"></p>
-</form>
-<!_削除番号フォーム_>
-<form action = "mission_2-6.php" method ="post">
-<p>削除番号：<input type= "text"  name = "delete_num">
-<input type = "submit" value="send it"></p>
-</form>
-
-<?php
 $i=0;
 
 if($i== 0){
 	
-	$name=$_POST['name'];
-
-	$memo=$_POST['memo'];
-
 	$lines = file($textfile);
 
 	foreach($lines as $line){
@@ -200,6 +183,9 @@ if($i== 0){
 		echo $data[0]." ".$data[1]."<br>".$data[2]."<br>"."投稿時間".$data[4]."<br>";
 	}
 }
+
 ?>
+
+
 </body>
 </html>
